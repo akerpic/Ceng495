@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    CENG495 HW1
+    <br />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><title>
+
+</title>
+</head>
+<body>
+    <form method="POST">
+        <br>
+        Name:
+        &nbsp;<input name="qrname" type = "text"> 
+        
+        <br><br>
+        Code Color:
+        <select name="qrList">
+            <option selected="selected" value="000">Black</option>
+            <option value="fff">White</option>
+            <option value="f00">Red</option>
+            <option value="0f0">Green</option>
+        </select>
+        <br><br>
+        Background Color:
+        <select name="backgroundList">
+            <option selected="selected" value="fff">White</option>
+            <option value="000">Black</option>
+            <option value="f00">Red</option>
+            <option value="0f0">Green</option>
+            <option value="00f">Blue</option>
+
+        </select>
+        <br /><br />
+        <input value='Create' type="submit">
+    </form>
+
+    <br /><br />
+    <img src="{{ qr_image }}" style="color:White;background-color:White;border-color:White;border-width:0px;border-style:None;height:150px;width:150px;" />
+    <br /><br />
+
+    <form enctype="multipart/form-data" action="http://api.qrserver.com/v1/read-qr-code/" method="post" enableviewstate="True">
+        
+        <input type="hidden" name="MAX_FILE_SIZE" value="1048576" />
+            Choose QR code image to read/scan: <input name="file" type="file" />
+        <input type="submit" value="Read QR code" />
+        
+    </form>
+
+
+</body>
+</html>

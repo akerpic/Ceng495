@@ -1,0 +1,38 @@
+Index file should run with using Firefox.
+
+Design Choices:
+
+I used HTML  and JavaScript  in order to add the desired features in the homework. 
+I used JavaScript while doing followings:
+* Changing the current page
+* Passing information to the next page
+* Communicating MongoDB
+* Changing dynamically values of elements of HTML
+
+Furthermore, I used HTML CSS in order to change style of the buttons and lists. 
+
+I thought a single collection that is called 'user' would be enough while designing the database structure of MongoDB.
+Documents of the collection include following fields: _id, name, wallet, rating, ratingCount, store, order_history.
+
+Fields of user:
+_id: is added by default
+name: name of the user
+wallet: balance of the user
+rating: rating of the user
+ratingCount: represents how many times the user has been voted.
+store: is an array which is includes products that contain several fields such as productName,productPhoto,productPrice,productQuantity.
+order_history: is an array which is includes user's orders that contain several fields such as productName,productPhoto,productPrice,productQuantity,sellerName,isRated.
+
+Fields of store:
+productName: name of the product which is sold by the user
+productPhoto: photo of the product which is sold by the user
+productPrice: price of the product which is sold by the user
+productQuantity: quantity of the product which is sold by the user
+
+Fields of order_history:
+productName: name of the product which is purchased by the user
+productPhoto: photo of the product which is purchased by the user
+productPrice: price of the product which is purchased by the user
+productQuantity: quantity of the product which is purchased by the user
+sellerName: seller name of the product which is purchased by the user
+isRated: represents the information on whether the order has been voted or not by the user.

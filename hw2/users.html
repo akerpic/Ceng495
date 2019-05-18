@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <title>eBay Clone</title>
+    <style>
+      .button {
+        display: inline-block;
+        padding: 5px 7px;
+        font-size: 12px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        outline: none;
+        color: #fff;
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 2px;
+        box-shadow: 0 4px #999;
+      }
+
+      .button:hover {background-color: #3e8e41}
+
+      .button:active {
+        background-color: #3e8e41;
+        box-shadow: 0 5px #666;
+        transform: translateY(4px);
+      }
+    </style>
+
+        <style>
+      .productbutton {
+        display: inline-block;
+        padding: 5px 7px;
+        font-size: 12px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        outline: none;
+        color: #000000;
+        background-color: #DCDCDC;
+        border: none;
+        border-radius: 2px;
+        box-shadow: 0 3px #999;
+      }
+
+      .productbutton:hover {background-color: #A9A9A9}
+
+      .productbutton:active {
+        background-color: #A9A9A9;
+        box-shadow: 0 4px #666;
+        transform: translateY(4px);
+      }
+    </style>
+    <style>
+      body {
+        margin: 10;
+        min-width: 50px;
+        max-width: 200px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      ul {
+        margin: 10;
+        padding: 0;
+      }
+
+      ul li {
+        cursor: pointer;
+        position: relative;
+        padding: 12px 8px 12px 40px;
+        list-style-type: none;
+        background: #eee;
+        font-size: 12px;
+        transition: 0.2s;
+        
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      ul li:nth-child(odd) {
+        background: #f9f9f9;
+      }
+
+      ul li:hover {
+        background: #ddd;
+      }
+
+</style>
+    <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.3.1/stitch.js"></script>
+    <script>
+      const client = stitch.Stitch.initializeDefaultAppClient('hw2-xrgii');
+      const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('hw2_database');
+      const user_name = (new URL(window.location.href)).searchParams.get("name");
+      const criteria = {name: user_name}
+    </script>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+  </head>
+<body>
+
+<h2>User Information</h2>
+
+<p id="demo"></p>
+
+<h3 id = "userName" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "wallet" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "rating" style="border:2px solid DodgerBlue;"></h3>
+
+Amount: <input type="text" style="border:2px solid DodgerBlue;" id="amount" >
+
+<button class="button" onclick="deposit()" value="deposit">Deposit</button>
+
+<button class="button" onclick="withdraw()" value="withdraw">Withdraw</button>
+
+<p></p>
+<button class="productbutton" onclick="Products()" value="Products">Products</button>
+
+<button class="productbutton" onclick="Logout()" value="Logout">Logout</button>
+
+
+<p>Sell Product</p>
+<p></p>
+Product Name: <input type="text" style="border:2px solid DodgerBlue;" id="productName" >
+<p></p>
+Product Photo Link: <input type="text" style="border:2px solid DodgerBlue;" id="productPhoto" >
+<p></p>
+Product Quantity: <input type="text" style="border:2px solid DodgerBlue;" id="productQuantity" >
+<p></p>
+Product Price: <input type="text"  style="border:2px solid DodgerBlue;" id="productPrice" >
+<p></p>
+<button class="button" onclick="sellProduct()" value="sellProduct">Sell Product</button>
+
+<h3  style=" background-color: lightblue; color:white; border:2px solid skyblue;" >Products on Sale  </h3>
+<ul id="productList">
+</ul>
+
+<h3  style=" background-color: lightblue; color:white; border:2px solid skyblue;" >Order History  </h3>
+<ul id="orderList">
+</ul>
+
+<script type="text/javascript">
+  var sellers = [];
+  var myDocument = db.collection('user').findOne(criteria);
+
+  myDocument.then(function(result)
+  {
+    if(result != null)
+    {
+      document.getElementById("userName").innerHTML = "User Name : " + result.name;
+      document.getElementById("wallet").innerHTML = "Wallet : " + parseFloat(result.wallet).toFixed(2);
+      document.getElementById("rating").innerHTML = "Rating : " + parseFloat(result.rating).toFixed(1);
+      const storeList = result.store;
+      const orderList = result.order_history;
+      var i;
+      for (i = 0; i < storeList.length; i++) { 
+        newElement(storeList[i].productName, "productList")
+      }
+      for (i = 0; i < orderList.length; i++) { 
+        sellers.push(orderList[i].sellerName);
+        newElement(i+1 + ") " +  orderList[i].productName, "orderList")
+      }
+    }
+  }
+  );
+
+  function deposit()
+  {
+    var myDocument = db.collection('user').findOne(criteria);
+    myDocument.then(function(result)
+    {
+      if(isNaN(document.getElementById("amount").value))
+      {
+        alert("It is Nan.");           
+      }
+      else if(document.getElementById("amount").value === "")
+      {
+          alert("Amount cannot be empty");           
+      }
+      else
+      {
+        if(result != null)
+        {
+          var new_amount = parseFloat(result.wallet) + parseFloat(document.getElementById("amount").value);
+          var updateWallet = {wallet: new_amount};
+
+          db.collection('user').updateOne(criteria,{$set: updateWallet});
+
+          document.getElementById("wallet").innerHTML = "Wallet : " + new_amount.toFixed(2);
+          document.getElementById("amount").value = "";
+        }  
+      }
+      
+    }
+    );
+  }
+
+  function withdraw()
+  {
+    var myDocument = db.collection('user').findOne(criteria);
+    myDocument.then(function(result)
+    {
+      if(result != null)
+      {
+        if(parseFloat(result.wallet) < parseFloat(document.getElementById("amount").value))
+        {
+          alert("You don't have enough balance."); 
+        }
+        else if(isNaN(document.getElementById("amount").value))
+        {
+          alert("It is Nan.");           
+        }
+        else if(document.getElementById("amount").value === "")
+        {
+          alert("Amount cannot be empty");           
+        }
+        else
+        {
+          var new_amount = parseFloat(result.wallet) - parseFloat(document.getElementById("amount").value);
+          var updateWallet = {wallet: new_amount};
+
+          db.collection('user').updateOne(criteria,{$set: updateWallet});
+
+          document.getElementById("wallet").innerHTML = "Wallet : " + new_amount.toFixed(2);
+          document.getElementById("amount").value = "";
+        }
+
+      }
+    }
+    );
+  }
+
+  function sellProduct()
+  {
+    var myDocument = db.collection('user').findOne(criteria);
+    myDocument.then(function(result)
+    {
+      if(result != null)
+      {
+        if(isNaN(document.getElementById("productPrice").value) || isNaN(document.getElementById("productQuantity").value))
+        {
+          alert("Price and Quantity can not be Nan."); 
+        }
+        else if(document.getElementById("productName").value === "")
+        {
+          alert("Product Name section  can not be empty"); 
+        }
+        else
+        {
+          var products = result.store;
+          var new_product = {productName: document.getElementById("productName").value, productPhoto: document.getElementById("productPhoto").value
+          , productPrice: document.getElementById("productPrice").value, productQuantity: document.getElementById("productQuantity").value};
+
+          products.push(new_product);
+          var updateStore = {store: products};
+          
+          db.collection('user').updateOne(criteria,{$set: updateStore});
+          newElement(document.getElementById("productName").value, "productList");
+          clearProduct();
+        }
+
+      }
+    }
+    );
+  }
+
+  function newElement(product_name, updateList) {
+    var li = document.createElement("li");
+    var t = document.createTextNode(product_name);
+    li.appendChild(t);
+    document.getElementById(updateList).appendChild(li);
+}
+  function clearProduct()
+  {
+    document.getElementById("productName").value = "";
+    document.getElementById("productPhoto").value = "";
+    document.getElementById("productPrice").value = "";
+    document.getElementById("productQuantity").value = "";
+
+  }
+
+    function getEventTarget(e) {
+        e = e || window.event;
+        return e.target || e.srcElement; 
+    }
+
+    var ul = document.getElementById("productList");
+    ul.onclick = function(event) {
+        var target = getEventTarget(event);
+        console.log(target.innerHTML);
+        if(target.innerHTML != "")
+          loadUrl("./product.html?name=" + user_name + "&pname=" + target.innerHTML);
+    };
+
+    var ul2 = document.getElementById("orderList");
+    ul2.onclick = function(event) {
+        var target = getEventTarget(event);
+        console.log(target.innerHTML);
+        console.log(target.innerHTML.slice(3));
+        if(target.innerHTML != "") 
+          loadUrl("./order.html?name=" + user_name + "&seller=" + sellers[parseInt(target.innerHTML.slice(0,1))-1] + "&pname=" + target.innerHTML.slice(3));
+    };
+
+    function Products()
+    {
+        loadUrl("./all_products.html?name=" + user_name);
+    }
+
+    function Logout()
+    {
+      loadUrl("./index.html");
+    }
+    function loadUrl(newLocation)
+    {
+      window.location = newLocation;
+      return false;
+    }
+
+</script>
+
+
+</body>
+</html> 

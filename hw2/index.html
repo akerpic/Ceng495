@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.3.1/stitch.js"></script>
+    <title>eBay Clone</title>
+        <style>
+      .button {
+        display: inline-block;
+        padding: 5px 7px;
+        font-size: 12px;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        outline: none;
+        color: #fff;
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 2px;
+        box-shadow: 0 4px #999;
+      }
+
+      .button:hover {background-color: #3e8e41}
+
+      .button:active {
+        background-color: #3e8e41;
+        box-shadow: 0 5px #666;
+        transform: translateY(4px);
+      }
+    </style>
+
+  </head>
+<body>
+
+<h2>Ebay Clone</h2>
+
+Name: <input type="text" id="name" style="border:2px solid DodgerBlue;" >
+<h3></h3>
+
+<button class="button" onclick="addUser()" value="addUser">Add</button>
+
+<button class="button" onclick="deleteUser()" value="deleteUser">Delete</button>
+
+<button class="button" onclick="login()" value="login">Login</button>
+
+
+<script>
+  const client = stitch.Stitch.initializeDefaultAppClient('hw2-xrgii');
+  const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('hw2_database');
+  client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user =>
+    db.collection('user').find({owner_id: client.auth.user.id}, { limit: 100}).asArray()
+  ).then(docs => {
+      console.log("Found docs", docs)
+      console.log("[MongoDB Stitch] Connected to Stitch")
+  }).catch(err => {
+    console.error(err)
+  });
+</script>
+
+<script>
+
+  function addUser()
+  {
+    db.collection('user').findOne({name: document.getElementById("name").value}).then(function(result)
+    {
+      if(result != null)
+      {
+         alert("User already exists");              
+      }
+      else if(document.getElementById("name").value === "")
+      {
+         alert("Name section cannot be empty.");                      
+      }
+      else
+      {
+        db.collection('user').insertOne({name: document.getElementById("name").value, wallet: 0.000000, rating: 0.000000, ratingCount: 0, store: [], order_history: []})
+        .then(docs => {
+        console.log("Found docs", docs)
+        }).catch(err => {
+        console.error(err)
+        });  
+        alert("User is added");
+      }
+    }
+    );
+  }
+
+  function deleteUser()
+  {
+    var myDocument = db.collection('user').findOne({name: document.getElementById("name").value});
+    myDocument.then(function(result)
+    {
+      if(result != null)
+      {
+        client.auth.loginWithCredential(new stitch.AnonymousCredential()).then(user =>
+        db.collection('user').deleteOne({name: document.getElementById("name").value})
+        .catch(err => {
+        console.error(err)
+        }));
+        
+        alert("User deleted.");              
+      }
+      else
+      {
+        alert("There is no such a user.");
+      }
+    }
+    );
+
+
+  
+  }
+
+  function login()
+  {
+    const loginName = document.getElementById("name").value;
+    document.getElementById("name").value = "";
+    var myDocument = db.collection('user').findOne({name: loginName});
+
+    myDocument.then(function(result){
+
+      if(result != null)
+      {
+        loadUrl("./users.html?name=" + loginName);
+      }
+      else
+      {
+        alert("There is no such a user.");
+      }
+    }
+    );
+  }
+
+  function loadUrl(newLocation)
+  {
+  window.location = newLocation;
+  return false;
+  }
+
+
+</script>
+
+</body>
+</html> 

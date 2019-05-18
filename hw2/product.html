@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<script src="userScripts.js"></script>
+<html>
+	<head>
+		<title>eBay Clone</title>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    	<meta content="utf-8" http-equiv="encoding">
+    		<script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.3.1/stitch.js"></script>
+    		<script>
+	      		const client = stitch.Stitch.initializeDefaultAppClient('hw2-xrgii');
+	      		const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('hw2_database');
+	          	const user_name = (new URL(window.location.href)).searchParams.get("name");
+	          	const product_name = (new URL(window.location.href)).searchParams.get("pname");
+	      		const criteria = {name: user_name}
+    		</script>
+  		</head>
+<body>
+
+<h2>Product Information</h2>
+<h3 id = "username"></h3>
+
+<img id="product_photo" style=" border:2px solid DodgerBlue; height:80px;max-width:80;width: expression(this.width > 80 ? 80: true);" src="https://bigriverequipment.com/wp-content/uploads/2017/10/no-photo-available.png">
+
+<h3 id = "product_name" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_photo_link" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_price" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_quantity" style="border:2px solid DodgerBlue;"></h3>
+
+<button type="button" onclick="BackToUser()">Back</button>
+
+<button type="button" onclick="DropProduct()">Drop Product</button>
+
+<script type="text/javascript">
+	document.getElementById("username").innerHTML = "User name: " + user_name;
+  	var myDocument = db.collection('user').findOne(criteria);
+  	myDocument.then(function(result)
+  	{
+    	if(result != null)
+    	{
+	    	document.getElementById("product_name").innerHTML = "Product Name : " + product_name;
+	      	const storeList = result.store;
+	      	var i;
+	     	for (i = 0; i < storeList.length; i++) {
+		    		if(storeList[i].productName === product_name)
+		    	 	{
+		    	 		if(storeList[i].productPhoto != null && storeList[i].productPhoto != "")
+		    	 		{
+							document.getElementById("product_photo").src = storeList[i].productPhoto;	
+		    	 		}
+						document.getElementById("product_photo_link").innerHTML = "Product Photo Link : " + storeList[i].productPhoto;
+						document.getElementById("product_price").innerHTML = "Product Price : " + storeList[i].productPrice;
+						document.getElementById("product_quantity").innerHTML = "Product Quantity : " + storeList[i].productQuantity;
+		    	 	}
+	    	}      
+    	}
+  	}
+  	);
+
+	function arrayRemove(arr, value) {
+
+	   return arr.filter(function(ele){
+	       return ele.productName != value;
+	   });
+
+	}
+
+  	function DropProduct()
+  	{
+  		var myDocument = db.collection('user').findOne(criteria);
+	  	myDocument.then(function(result)
+	  	{
+	    	if(result != null)
+	    	{
+		      	var storeList = result.store;
+		      	var i;
+				var updateStore = {store: arrayRemove(storeList, product_name)};
+				db.collection('user').updateOne(criteria,{$set: updateStore});
+				alert("Product is removed. You can back to user page.");
+	    	}
+	  	}
+	  	);
+		
+  	}
+
+
+	function BackToUser()
+	{
+        loadUrl("./users.html?name=" + user_name);
+	}
+	function loadUrl(newLocation)
+    {
+      window.location = newLocation;
+      return false;
+    }
+</script>
+
+
+</body>
+</html>

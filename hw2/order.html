@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<script src="userScripts.js"></script>
+<html>
+	<head>
+		<title>eBay Clone</title>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    	<meta content="utf-8" http-equiv="encoding">
+    		<script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.3.1/stitch.js"></script>
+    		<script>
+	      		const client = stitch.Stitch.initializeDefaultAppClient('hw2-xrgii');
+	      		const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('hw2_database');
+	          	const user_name = (new URL(window.location.href)).searchParams.get("name");
+	          	const seller_name = (new URL(window.location.href)).searchParams.get("seller");
+	          	const product_name = (new URL(window.location.href)).searchParams.get("pname");
+	      		const criteria = {name: user_name}	          	
+	      		const sellerCriteria = {name: seller_name}
+    		</script>
+  		</head>
+<body>
+
+<h2>Order Information</h2>
+<h3 id = "username"></h3>
+
+<img id="product_photo" style=" border:2px solid DodgerBlue; height:80px;max-width:80;width: expression(this.width > 80 ? 80: true);" src="https://bigriverequipment.com/wp-content/uploads/2017/10/no-photo-available.png">
+
+<h3 id = "product_name" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_photo_link" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_price" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_quantity" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "sellers_name" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "sellers_rating" style="border:2px solid DodgerBlue;"></h3>
+
+<p id = "rataParagraph">Rate: <input type="text" style="border:2px solid DodgerBlue;" id="rate" > <button type="button" onclick="Rate()">Rate</button>
+</p> 
+
+<button type="button" onclick="BackToUser()">Back</button>
+
+<script type="text/javascript">
+	document.getElementById("username").innerHTML = "User name: " + user_name;
+  	var myDocument = db.collection('user').findOne(criteria);
+  	myDocument.then(function(result)
+  	{
+    	if(result != null)
+    	{
+	    	document.getElementById("product_name").innerHTML = "Product Name : " + product_name;
+	      	const orders = result.order_history;
+
+	      	var i;
+	     	for (i = 0; i < orders.length; i++) {
+		    		if(orders[i].productName === product_name)
+		    	 	{
+		    	 		if(orders[i].productPhoto != null && orders[i].productPhoto != "")
+		    	 		{
+							document.getElementById("product_photo").src = orders[i].productPhoto;	
+		    	 		}
+
+		    	 		var sellerDocument = db.collection('user').findOne(sellerCriteria);
+  						sellerDocument.then(function(sellerResult)
+  						{
+					  	    if(sellerResult != null)
+					    	{
+				      			document.getElementById("sellers_rating").innerHTML = "Sellers Rating : " + parseFloat(sellerResult.rating).toFixed(1);
+					    	}
+  						});
+
+						document.getElementById("sellers_name").innerHTML = "Sellers Name : " + orders[i].sellerName;
+
+						document.getElementById("product_photo_link").innerHTML = "Product Photo Link : " + orders[i].productPhoto;
+						document.getElementById("product_price").innerHTML = "Product Price : " + orders[i].productPrice;
+						document.getElementById("product_quantity").innerHTML = "Product Quantity : " + orders[i].productQuantity;
+						console.log(orders[i].isRated);
+						if(orders[i].isRated === true || orders[i].isRated === "true")
+						{
+							document.getElementById("rataParagraph").style.visibility = "hidden";
+						}
+
+					 	i=orders.length;
+		    	 	}
+	    	}      
+    	}
+  	}
+  	);
+
+  	function Rate()
+  	{
+  		if(isNaN(document.getElementById("rate").value))
+  		{
+  			alert("Rate can not be Nan.");
+  		}
+  		else if(parseFloat(document.getElementById("rate").value)<0 || parseFloat(document.getElementById("rate").value)>5)
+  		{
+  			alert("Rate must be between 0 and 5.");
+  		}
+  		else
+  		{
+			var sellerDocument = db.collection('user').findOne(sellerCriteria);
+	  		sellerDocument.then(function(sellerResult)
+	  		{
+				if(sellerResult != null)
+				{
+					var newRatingCount = sellerResult.ratingCount + 1;
+					var	newRating = (parseFloat(document.getElementById("rate").value) + parseFloat(sellerResult.rating)*sellerResult.ratingCount)/newRatingCount;
+					document.getElementById("sellers_rating").innerHTML = "Sellers Rating : " + newRating.toFixed(1);
+       				db.collection('user').updateOne(sellerCriteria,{$set: {ratingCount: newRatingCount}});
+       				db.collection('user').updateOne(sellerCriteria,{$set: {rating: newRating}});
+       				document.getElementById("rataParagraph").style.visibility = "hidden";
+
+       				var Document = db.collection('user').findOne(criteria);
+			  		Document.then(function(result)
+			  		{
+						if(result != null)
+						{
+							var orders = result.order_history;
+							for (i = 0; i < orders.length; i++) {
+					    		if(orders[i].productName === product_name)
+					    	 	{
+					    	 		orders[i].isRated = true;
+					    	 	}
+				    	}    
+					   	db.collection('user').updateOne(criteria,{$set: {order_history: orders}});
+						}
+			  		});
+				}
+	  		});
+
+  			
+  		}
+
+  	}
+
+	function BackToUser()
+	{
+        loadUrl("./users.html?name=" + user_name);
+	}
+	function loadUrl(newLocation)
+    {
+      window.location = newLocation;
+      return false;
+    }
+</script>
+
+
+</body>
+</html>

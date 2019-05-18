@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>eBay Clone</title>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    	<meta content="utf-8" http-equiv="encoding">
+    	<style>
+		   	.button {
+		        display: inline-block;
+		        padding: 5px 7px;
+		        font-size: 12px;
+		        cursor: pointer;
+		        text-align: center;
+		        text-decoration: none;
+		        outline: none;
+		        color: #fff;
+		        background-color: #4CAF50;
+		        border: none;
+		        border-radius: 2px;
+		        box-shadow: 0 4px #999;
+		   	}
+	    	.button:hover {background-color: #3e8e41}
+	    	.button:active {
+	        	background-color: #3e8e41;
+	        	box-shadow: 0 5px #666;
+	        	transform: translateY(4px);
+	      	}
+   		</style>
+    	<script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.3.1/stitch.js"></script>
+    	<script>
+      		const client = stitch.Stitch.initializeDefaultAppClient('hw2-xrgii');
+      		const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('hw2_database');
+          	const user_name = (new URL(window.location.href)).searchParams.get("name");
+      		const seller_name = (new URL(window.location.href)).searchParams.get("seller");
+      		const product_name = (new URL(window.location.href)).searchParams.get("pname");
+      		const criteria = {name: user_name}
+      		const sellerCriteria = {name: seller_name}
+      		var price, quantity, rating, product_photo_link;
+      		console.log("Username = " + user_name + "\n");
+      		console.log("Sellername = " + seller_name + "\n");
+      		console.log("Productname = " + product_name + "\n");
+      		console.log(user_name);
+    	</script>
+  	</head>
+<body> 
+
+<h2>Product Information</h2>
+<img id="product_photo" style=" border:2px solid DodgerBlue; height:80px;max-width:80;width: expression(this.width > 80 ? 80: true);" src="https://bigriverequipment.com/wp-content/uploads/2017/10/no-photo-available.png">
+
+<h3 id = "product_name" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_photo_link" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_price" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "product_quantity" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "sellers_name" style="border:2px solid DodgerBlue;"></h3>
+
+<h3 id = "sellers_rating" style="border:2px solid DodgerBlue;"></h3>
+
+Order Quantity: <input type="text" style="border:2px solid DodgerBlue;" id="orderQuantity" >
+
+<button class="button" onclick="Buy()">Buy</button>
+<p></p>
+<button class="button" onclick="BackToUser()">Back</button>
+
+<script type="text/javascript">
+	var myDocument = db.collection('user').findOne(sellerCriteria);
+  	myDocument.then(function(result)
+  	{
+    	if(result != null)
+    	{
+	    	document.getElementById("product_name").innerHTML = "Product Name : " + product_name;
+	     	document.getElementById("sellers_name").innerHTML = "Sellers Name : " + result.name;
+	      	document.getElementById("sellers_rating").innerHTML = "Sellers Rating : " + parseFloat(result.rating).toFixed(1);
+	      	const storeList = result.store;
+	      	var i;
+	      	rating = result.rating;
+	     	for (i = 0; i < storeList.length; i++) {
+		    		if(storeList[i].productName === product_name)
+		    	 	{
+		    	 		if(storeList[i].productPhoto != null && storeList[i].productPhoto != "")
+		    	 		{
+							document.getElementById("product_photo").src = storeList[i].productPhoto;	
+		    	 		}
+						price = parseFloat(storeList[i].productPrice);
+						quantity = parseInt(storeList[i].productQuantity);
+						product_photo_link = storeList[i].productPhoto;
+						document.getElementById("product_photo_link").innerHTML = "Product Photo Link : " + storeList[i].productPhoto;
+						document.getElementById("product_price").innerHTML = "Product Price : " + storeList[i].productPrice;
+						document.getElementById("product_quantity").innerHTML = "Product Quantity : " + storeList[i].productQuantity;
+		    	 	}
+	    	}
+    	}
+  	}
+  	);
+
+  	function Buy()
+  	{	
+  		order_quantity = parseInt(document.getElementById("orderQuantity").value);
+  		if(checkConditions())
+  		{
+  			var myDocument = db.collection('user').findOne(criteria);
+		    myDocument.then(function(result)
+		    {
+		      if(result != null)
+		      {
+		      	var moneyAmount = parseFloat(result.wallet);
+		      	if(moneyAmount < price*order_quantity)
+		      	{
+		      		alert("Balance is not enough.");
+		      	}
+		      	else
+		      	{
+		      		moneyAmount = moneyAmount - price*order_quantity;
+
+		      		console.log(order_quantity);
+		      		console.log(moneyAmount);
+		      		db.collection('user').updateOne(criteria,{$set: {wallet: moneyAmount}});
+
+
+		      		var orders = result.order_history;
+			        var new_order = {productName: product_name, productPhoto: product_photo_link
+			        , productPrice: price, productQuantity: order_quantity, sellerName: seller_name, isRated: false};
+			        orders.push(new_order);
+			        var updateOrderHistory = {order_history: orders};
+
+       				db.collection('user').updateOne(criteria,{$set: updateOrderHistory});
+       			
+     				manageSellerData(order_quantity);
+     				alert("Purchase completed.");
+     				//loadUrl("./all_products.html?name=" + user_name);
+		      	}
+
+		      }
+		    }
+		    );
+		}
+  	}
+
+
+
+  	function decreaseQuantity(newQuantity)
+  	{
+  		var myDocument = db.collection('user').findOne(sellerCriteria);
+	  	myDocument.then(function(result)
+	  	{
+	    	if(result != null)
+	    	{
+		      	var storeList = result.store;
+		      	var i;
+		      	for (i = 0; i < storeList.length; i++)
+		      	{
+					if(storeList[i].productName === product_name)
+					{
+						storeList[i].productQuantity = newQuantity;
+					}
+				}
+				var updateStore = {store: storeList};
+				db.collection('user').updateOne(sellerCriteria,{$set: updateStore});
+				document.getElementById("product_quantity").innerHTML = "Product Quantity : " + newQuantity;
+				console.log(storeList);
+	    	}
+	  	}
+	  	);
+		
+  	}
+  	function manageSellerData(order_quantity)
+  	{
+  		var myDocument = db.collection('user').findOne(sellerCriteria);
+		myDocument.then(function(result)
+		{
+			if(result != null)
+		    {
+		    	console.log("seller = " + result.name);
+		      	var newWallet = parseFloat(result.wallet) + (order_quantity * price);
+		      	var updateWallet = {wallet: newWallet};
+		      	db.collection('user').updateOne(sellerCriteria,{$set: updateWallet});
+		    
+		      	decreaseQuantity(quantity-order_quantity);
+		    }
+		}
+		);  		
+  	}
+
+  	function checkConditions()
+  	{
+  		if(seller_name === user_name)
+  		{
+  			alert("You can not buy your own product.");
+  			return false;
+  		}
+  		else if(document.getElementById("orderQuantity").value === "")
+  		{
+  			alert("Order quantity section can not be empty.");
+  			return false;
+  		}
+  		else if(parseInt(document.getElementById("orderQuantity").value) > quantity)
+  		{
+  			alert("You can not buy more than " + quantity + ".");
+  			return false;
+  		}
+  		return true;
+  	}
+
+	function BackToUser()
+	{
+        loadUrl("./users.html?name=" + user_name);
+	}
+	function loadUrl(newLocation)
+    {
+      window.location = newLocation;
+      return false;
+    }
+
+</script>
+
+
+</body>
+</html>

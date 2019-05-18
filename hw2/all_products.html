@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<script src="userScripts.js"></script>
+<html>
+	<head>
+		<title>eBay Clone</title>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    	<meta content="utf-8" http-equiv="encoding">
+    	    <style>
+		    	.button {
+			        display: inline-block;
+			        padding: 5px 7px;
+			        font-size: 12px;
+			        cursor: pointer;
+			        text-align: center;
+			        text-decoration: none;
+			        outline: none;
+			        color: #fff;
+			        background-color: #4CAF50;
+			        border: none;
+			        border-radius: 2px;
+			        box-shadow: 0 4px #999;
+		    	}
+
+		    	.button:hover {background-color: #3e8e41}
+
+		    	.button:active {
+		        	background-color: #3e8e41;
+		        	box-shadow: 0 5px #666;
+		        	transform: translateY(4px);
+		      	}
+    		</style>
+    	    <style>
+		     	body {
+		        	margin: 10;
+		        	min-width: 50px;
+		        	max-width: 200px;
+		      	}
+
+		      	* {
+		        	box-sizing: border-box;
+		      	}
+
+		      	ul {
+		        	margin: 10;
+		        	padding: 0;
+		      	}
+
+		      	ul li {
+			        cursor: pointer;
+			        position: relative;
+			        padding: 12px 8px 12px 40px;
+			        list-style-type: none;
+			        background: #eee;
+			        font-size: 12px;
+			        transition: 0.2s;
+			        
+			        -webkit-user-select: none;
+			        -moz-user-select: none;
+			        -ms-user-select: none;
+			        user-select: none;
+		      	}
+
+		      	ul li:nth-child(odd) {
+		        	background: #f9f9f9;
+		      	}
+
+		      	ul li:hover {
+		        	background: #ddd;
+		      	}
+			</style>
+	    	<script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.3.1/stitch.js"></script>
+	    	<script>
+	      		const client = stitch.Stitch.initializeDefaultAppClient('hw2-xrgii');
+	      		const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('hw2_database');
+	          	const user_name = (new URL(window.location.href)).searchParams.get("name");
+	      		const criteria = {name: user_name}
+	    	</script>
+  		</head>
+<body> 
+
+<h2>All Products</h2>
+<h3  style=" background-color: lightblue; color:white; border:2px solid skyblue;" >Products on Sale  </h3>
+<ul id="productList">
+</ul>
+<button class="button" onclick="BackToUser()" value="BackToUser">Back</button>
+
+
+<script type="text/javascript">
+	var userList = [];
+
+	var myDocument = db.collection("user").find().toArray();
+	myDocument.then(function(result)
+  {
+  	i=0;
+  	count = 0;
+  	while(result[i])
+    {
+    	console.log(result[i].name);
+    	var storeList = result[i].store;
+    	for (j = 0; j < storeList.length; j++) { 
+    		count ++;
+    		userList.push(result[i].name);
+        	newElement(count + ") " + storeList[j].productName)
+      	}
+    	i++;
+    }	
+  }
+  );
+
+	function newElement(product_name) {
+	  var li = document.createElement("li");
+	  var t = document.createTextNode(product_name);
+	  li.appendChild(t);
+	  document.getElementById("productList").appendChild(li);
+	}
+
+	function getEventTarget(e) {
+        e = e || window.event;
+        return e.target || e.srcElement; 
+    }
+
+    var ul = document.getElementById("productList");
+    ul.onclick = function(event) {
+        var target = getEventTarget(event);
+        if(target.innerHTML != "")
+        {
+	    	const newURL = "./buyProduct.html?name=" + user_name + "&seller=" + userList[parseInt(target.innerHTML.slice(0,1))-1] + "&pname=" + target.innerHTML.slice(3);
+	    	loadUrl(newURL);
+        }
+    };
+
+
+
+	function BackToUser()
+	{
+        loadUrl("./users.html?name=" + user_name);
+
+	}
+	function loadUrl(newLocation)
+    {
+      window.location = newLocation;
+      return false;
+    }
+
+</script>
+
+
+</body>
+</html>
